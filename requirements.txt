@@ -1,0 +1,3 @@
+pyopenmensa
+requests
+beautifulsoup4
