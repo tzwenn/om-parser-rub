@@ -1,3 +1,4 @@
 pyopenmensa
 requests
 beautifulsoup4
+Flask
