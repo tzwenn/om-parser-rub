@@ -8,8 +8,6 @@ import requests
 
 import pyopenmensa.feed
 
-URL = 'https://q-we.st/speiseplan/'
-
 MEAL_NAME_TEMPLATE = 'Angebot %d'
 PRICE_ROLES = ('student', 'other')
 
@@ -29,7 +27,7 @@ class RubParser(ABC):
 
 
 	def download_menu(self):
-		request = requests.get(URL, timeout=30)
+		request = requests.get(self.URL, timeout=30)
 		soup = BeautifulSoup(request.text, 'html.parser')
 		yield from self.parse_menu(soup)
 		
@@ -37,6 +35,8 @@ class RubParser(ABC):
 
 class RubQWestParser(RubParser):
 	
+	URL = 'https://q-we.st/speiseplan/'
+
 	def __init__(self):
 		super().__init__()
 
@@ -70,7 +70,7 @@ class RubQWestParser(RubParser):
 			return
 
 		title, notes_s = title_span.stripped_strings
-		notes = [n for n in notes_s.split(',') if n]
+		notes = [self.notes_dict.get(n, n) for n in notes_s.split(',') if n]
 		price_div = meal_div.find('span', 'live_speiseplan_item_price')
 		prices = dict(zip(PRICE_ROLES, price_div.string.split(' | ')))
 		return title, notes, prices
@@ -90,14 +90,10 @@ class RubQWestParser(RubParser):
 				yield date, MEAL_NAME_TEMPLATE % meal_id, *m
 
 
-	def translate_notes(self, _date, _meal, _title, notes, _prices, notes_dict):
-		return _date, _meal, _title, [notes_dict.get(n, n) for n in notes], _prices
-
-
 	def parse_menu(self, soup):
-		notes_dict = self.parse_notes(soup.find('div', 'live_speiseplan_kennzeichnung_content'))
+		self.notes_dict = self.parse_notes(soup.find('div', 'live_speiseplan_kennzeichnung_content'))
 		for day_div in soup.find_all('div', 'live_speiseplan_single_day'):
-			yield from map(lambda t: self.translate_notes(*t, notes_dict), self.parse_day(day_div))
+			yield from self.parse_day(day_div)
 
 
 def download_menu():
