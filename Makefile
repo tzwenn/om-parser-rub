@@ -1,4 +1,12 @@
-run:
-	flask --app rub.views run
+APPNAME=rub.views
 
-.PHONY: run
+all: debug
+
+run:
+	flask --app $(APPNAME) run
+
+debug:
+	flask --app $(APPNAME) --debug run
+
+
+.PHONY: run debug
