@@ -36,6 +36,7 @@ def _canteen_feed_xml(xml):
 	response.minetype = 'text/html'
 	return response
 
+
 def canteen_meta_feed_xml(canteen_key):
     menu_feed_url = url_for(
 		'canteen_menu_feed',
