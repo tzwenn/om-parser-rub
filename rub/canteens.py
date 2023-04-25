@@ -19,7 +19,7 @@ canteens = {
 		'Universitätsstraße 150',
 		'44801 Bochum',
 	),
-	'rote-beete': Canteen(
+	'rote-bete': Canteen(
 		rub.parser.RubAkafoeParser,
 		'Rote Beete Ruhr-Universität Bochum',
 		'Universitätsstraße 150',
