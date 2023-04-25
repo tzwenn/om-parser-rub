@@ -141,7 +141,10 @@ class RubAkafoeParser(RubParser):
 		notes = self.translate_notes(notes_s.split(','))
 
 		price_div = item_tag.find('div', 'price')
-		prices = dict(zip(PRICE_ROLES, map(str.strip, price_div.string.split(self.PRICE_SEP))))
+		if price_div is None or price_div.stripped_strings is None:
+			prices = {}
+		else:
+			prices = dict(zip(PRICE_ROLES, map(str.strip, list(price_div.stripped_strings)[0].split(self.PRICE_SEP))))
 		return category, title, notes, prices
 
 
