@@ -9,7 +9,7 @@ from pyopenmensa.feed import LazyBuilder
 def build_menu(canteen_key):
 	builder = LazyBuilder()
 	parser = rub.canteens.canteens[canteen_key].parser_class(canteen_key)
-	for date, category, title, notes, prices in rub.parser.download_menu():
+	for date, category, title, notes, prices in parser.download_menu():
 		builder.addMeal(
 			date=date,
 			category=category,

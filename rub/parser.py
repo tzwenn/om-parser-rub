@@ -177,9 +177,3 @@ class RubAkafoeParser(RubParser):
 
 		for date, day_div in zip(dates, self.soup.find_all('div', 'row', 'list-dish')):
 			yield from self.parse_day(date, day_div)
-
-
-def download_menu():
-	p = RubAkafoeParser('wh-recklinghausen')
-	#p = RubQWestParser()
-	yield from p.download_menu()
