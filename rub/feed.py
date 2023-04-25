@@ -1,14 +1,15 @@
 # -*- encoding: utf-8 -*-
 
 import rub.parser
+import rub.canteens
 
 from pyopenmensa.feed import LazyBuilder
 
 
-def build_menu():
+def build_menu(canteen_key):
 	builder = LazyBuilder()
-	for meal in rub.parser.download_menu():
-		date, category, title, notes, prices = meal
+	parser = rub.canteens.canteens[canteen_key].parser_class(canteen_key)
+	for date, category, title, notes, prices in rub.parser.download_menu():
 		builder.addMeal(
 			date=date,
 			category=category,
@@ -19,17 +20,19 @@ def build_menu():
 	return builder
 
 
-def render_menu():
-	builder = build_menu()
+def render_menu(canteen_key):
+	builder = build_menu(canteen_key)
 	return builder.toXMLFeed()
 
 
-def render_meta(menu_feed_url):
+def render_meta(canteen_key, menu_feed_url):
 	builder = LazyBuilder()
+
+	canteen = rub.canteens.canteens[canteen_key]
 	
-	builder.name = 'Q-West Ruhr-Universität Bochum'
-	builder.address = 'Universitätsstraße 150'
-	builder.city = '44801 Bochum'
+	builder.name = canteen.name
+	builder.address = canteen.address
+	builder.city = canteen.city
 
 	builder.define(
 		name='full',

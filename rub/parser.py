@@ -20,7 +20,7 @@ class RubParser(ABC):
 	URL = None
 	NOTES_DIV_CLASS = None
 
-	def __init__(self):
+	def __init__(self, *_placeholder_args):
 		self.notes_dict = {}
 
 
@@ -73,8 +73,8 @@ class RubQWestParser(RubParser):
 
 	PRICE_SEP = '|'
 
-	def __init__(self):
-		super().__init__()
+	def __init__(self, *_placeholder_args):
+		super().__init__(*_placeholder_args)
 
 
 	def parse_meal(self, meal_div):
@@ -117,12 +117,17 @@ class RubQWestParser(RubParser):
 
 class RubAkafoeParser(RubParser):
 
-	URL = 'https://www.akafoe.de/gastronomie/speiseplaene-der-mensen/ruhr-universitaet-bochum'
+	URL_BASE = 'https://www.akafoe.de/gastronomie/speiseplaene-der-mensen/{}'
 
 	NOTES_HEADING = 'Erläuterungen:'
 	NOTES_DIV_CLASS = 'col-sm-4'
 
 	PRICE_SEP = '/'
+
+
+	def __init__(self, key):
+		self.URL = self.URL_BASE.format(key)
+		super().__init__()
 
 
 	def find_notes(self):
@@ -175,6 +180,6 @@ class RubAkafoeParser(RubParser):
 
 
 def download_menu():
-	p = RubAkafoeParser()
+	p = RubAkafoeParser('wh-recklinghausen')
 	#p = RubQWestParser()
 	yield from p.download_menu()

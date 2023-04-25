@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 import rub.feed
+import rub.canteens
 
 import os
 import urllib.parse
@@ -12,8 +13,6 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 log = create_logger(app)
-
-canteens = ('q-west', )
 
 if 'BASE_URL' in os.environ:  # pragma: no cover
 	base_url = urllib.parse.urlparse(os.environ.get('BASE_URL'))
@@ -42,33 +41,32 @@ def canteen_meta_feed_xml(canteen_key):
 		'canteen_menu_feed',
 		canteen_name=canteen_key,
 		_external=True)
-    xml = rub.feed.render_meta(menu_feed_url)
+    xml = rub.feed.render_meta(canteen_key, menu_feed_url)
     return _canteen_feed_xml(xml)
 
 
 @app.route('/canteens/<canteen_name>')
 @app.route('/canteens/<canteen_name>/meta')
 def canteen_meta_feed(canteen_name):
-	if canteen_name not in canteens:
+	if canteen_name not in rub.canteens.canteens:
 		return canteen_not_found(canteen_name)
 	return canteen_meta_feed_xml(canteen_name)
 
 
 @app.route('/canteens/<canteen_name>/menu')
 def canteen_menu_feed(canteen_name):
-	if canteen_name not in canteens:
+	if canteen_name not in rub.canteens.canteens:
 		return canteen_not_found(canteen_name)
 
-	xml = rub.feed.render_menu()
+	xml = rub.feed.render_menu(canteen_name)
 	return _canteen_feed_xml(xml)
 
 @app.route('/')
 @app.route('/canteens')
 def canteen_index():
-	key = 'q-west'
 	return jsonify({
 		key: url_for('canteen_meta_feed', canteen_name=key, _external=True)
-		for key in canteens
+		for key in rub.canteens.canteens
 	})
 
 
