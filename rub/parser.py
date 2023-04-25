@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from abc import ABC, abstractmethod
+import datetime
 import logging
 import re
 
@@ -22,11 +23,13 @@ class RubParser(ABC):
 	def __init__(self):
 		self.notes_dict = {}
 
+
 	@abstractmethod
 	def parse_menu(self):
 		pass
 
 
+	@abstractmethod
 	def find_notes(self):
 		pass
 
@@ -68,6 +71,8 @@ class RubQWestParser(RubParser):
 	URL = 'https://q-we.st/speiseplan/'
 	NOTES_DIV_CLASS = 'kennzeichen'
 
+	PRICE_SEP = '|'
+
 	def __init__(self):
 		super().__init__()
 
@@ -83,7 +88,7 @@ class RubQWestParser(RubParser):
 		title, notes_s = title_span.stripped_strings
 		notes = self.translate_notes(notes_s.split(','))
 		price_div = meal_div.find('span', 'live_speiseplan_item_price')
-		prices = dict(zip(PRICE_ROLES, price_div.string.split(' | ')))
+		prices = dict(zip(PRICE_ROLES, map(str.strip, price_div.string.split(self.PRICE_SEP))))
 		return title, notes, prices
 
 
@@ -112,11 +117,12 @@ class RubQWestParser(RubParser):
 
 class RubAkafoeParser(RubParser):
 
-
 	URL = 'https://www.akafoe.de/gastronomie/speiseplaene-der-mensen/ruhr-universitaet-bochum'
 
 	NOTES_HEADING = 'Erläuterungen:'
 	NOTES_DIV_CLASS = 'col-sm-4'
+
+	PRICE_SEP = '/'
 
 
 	def find_notes(self):
@@ -124,8 +130,45 @@ class RubAkafoeParser(RubParser):
 		return header.find_next('div', 'row')
 
 
+	def parse_meal(self, meal_tag):
+		category = meal_tag.string
+		item_tag = meal_tag.find_next('div', 'item')
+
+		l = list(item_tag.find('h4').stripped_strings)
+		title = (l or [''])[0]
+
+		notes_s = item_tag.find('small').text.lstrip('(').rstrip(')')
+		notes = self.translate_notes(notes_s.split(','))
+
+		price_div = item_tag.find('div', 'price')
+		prices = dict(zip(PRICE_ROLES, map(str.strip, price_div.string.split(self.PRICE_SEP))))
+		return category, title, notes, prices
+
+
+	def parse_day(self, date, day_div):
+		for meal_tag in day_div.find_all('h3'):
+			yield date, *self.parse_meal(meal_tag)
+
+
+	def fix_date(self, date_s):
+		# The date string on the AKAFÖ site is missing the year.
+		# We assume it is the current year and at wrap arounds,
+		# (defined as more than half a year in the past), we add one year
+
+		today = datetime.date.today()
+		date = pyopenmensa.feed.extractDate(date_s.strip() + str(today.year))
+
+		if (today - date).days > 365 / 2:
+			return datetime.date(date.year + 1, date.month, date.day)
+		else:
+			return date
+
 	def parse_menu(self):
-		return ()
+		calender_div = self.soup.find('div', 'week')
+		dates = [self.fix_date(date_tag.string) for date_tag in calender_div.find_all('div', 'day')]
+
+		for date, day_div in zip(dates, self.soup.find_all('div', 'row', 'list-dish')):
+			yield from self.parse_day(date, day_div)
 
 
 def download_menu():
