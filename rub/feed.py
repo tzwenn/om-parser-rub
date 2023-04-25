@@ -33,6 +33,7 @@ def render_meta(canteen_key, menu_feed_url):
 	builder.name = canteen.name
 	builder.address = canteen.address
 	builder.city = canteen.city
+	builder.location(*map(str, (canteen.longitude, canteen.latitude)))
 
 	builder.define(
 		name='full',
