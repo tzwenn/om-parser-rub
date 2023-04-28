@@ -5,7 +5,7 @@ import datetime
 import logging
 import re
 
-from bs4 import BeautifulSoup
+import bs4
 import requests
 
 import pyopenmensa.feed
@@ -61,7 +61,7 @@ class RubParser(ABC):
 
 	def download_menu(self):
 		request = requests.get(self.URL, timeout=30)
-		self.soup = BeautifulSoup(request.text, 'html.parser')
+		self.soup = bs4.BeautifulSoup(request.text, 'html.parser')
 		self.notes_dict = self.parse_notes(self.find_notes())
 		yield from self.parse_menu()
 
@@ -135,27 +135,39 @@ class RubAkafoeParser(RubParser):
 		return header.find_next('div', 'row')
 
 
-	def parse_meal(self, meal_tag):
-		category = meal_tag.string
-		item_tag = meal_tag.find_next('div', 'item')
+	def search_item_siblings(self, category_tag):
+		current = category_tag
+		while current := current.next_sibling:
+			if not isinstance(current, bs4.element.Tag):
+				continue
+			if current.name == 'div' and 'item' in current.attrs.get("class", []):
+				yield current
+			else:
+				break
 
-		l = list(item_tag.find('h4').stripped_strings)
-		title = (l or [''])[0]
 
-		notes_s = item_tag.find('small').text.lstrip('(').rstrip(')')
-		notes = self.translate_notes(notes_s.split(','))
+	def parse_category(self, category_tag):
+		category = category_tag.string
 
-		price_div = item_tag.find('div', 'price')
-		if price_div is None or price_div.stripped_strings is None:
-			prices = {}
-		else:
-			prices = dict(zip(PRICE_ROLES, map(str.strip, list(price_div.stripped_strings)[0].split(self.PRICE_SEP))))
-		return category, title, notes, prices
+		for item_tag in self.search_item_siblings(category_tag):
+			l = list(item_tag.find('h4').stripped_strings)
+			title = (l or [''])[0]
+
+			notes_s = item_tag.find('small').text.lstrip('(').rstrip(')')
+			notes = self.translate_notes(notes_s.split(','))
+
+			price_div = item_tag.find('div', 'price')
+			if price_div is None or price_div.stripped_strings is None:
+				prices = {}
+			else:
+				prices = dict(zip(PRICE_ROLES, map(str.strip, list(price_div.stripped_strings)[0].split(self.PRICE_SEP))))
+			yield category, title, notes, prices
 
 
 	def parse_day(self, date, day_div):
-		for meal_tag in day_div.find_all('h3'):
-			yield date, *self.parse_meal(meal_tag)
+		for category_tag in day_div.find_all('h3'):
+			for meal in self.parse_category(category_tag):
+				yield date, *meal
 
 
 	def fix_date(self, date_s):
@@ -170,6 +182,7 @@ class RubAkafoeParser(RubParser):
 			return datetime.date(date.year + 1, date.month, date.day)
 		else:
 			return date
+
 
 	def parse_menu(self):
 		calender_div = self.soup.find('div', 'week')
