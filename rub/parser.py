@@ -85,7 +85,10 @@ class RubQWestParser(RubParser):
 		if title_span.string is not None:
 			return
 
-		title, notes_s = title_span.stripped_strings
+		elements = list(title_span.stripped_strings)
+		if len(elements) != 2:
+			return
+		title, notes_s = elements
 		notes = self.translate_notes(notes_s.split(','))
 		price_div = meal_div.find('span', 'live_speiseplan_item_price')
 		prices = dict(zip(PRICE_ROLES, map(str.strip, price_div.string.split(self.PRICE_SEP))))
