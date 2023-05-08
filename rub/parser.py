@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import datetime
 import logging
 import re
+import string
 
 import bs4
 import requests
@@ -164,6 +165,10 @@ class RubAkafoeParser(RubParser):
 				prices = {}
 			else:
 				prices = dict(zip(PRICE_ROLES, map(str.strip, list(price_div.stripped_strings)[0].split(self.PRICE_SEP))))
+				items = list(prices.items())
+				for key, value in items:
+					if not any(c in string.digits for c in value):
+						prices.pop(key)
 			yield category, title, notes, prices
 
 
