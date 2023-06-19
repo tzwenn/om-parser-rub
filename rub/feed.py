@@ -42,9 +42,9 @@ def render_meta(canteen_key, menu_feed_url):
 		source=None,
 		dayOfWeek='*',
 		dayOfMonth='*',
-		hour="8-18",
-		minute="23",
-		retry='30 1',
+		hour="2-18/2",
+		minute="13",
+		retry='30 3',
 	)
 
 	return builder.toXMLFeed()
