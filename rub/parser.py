@@ -196,5 +196,5 @@ class RubAkafoeParser(RubParser):
 		calender_div = self.soup.find('div', 'week')
 		dates = [self.fix_date(date_tag.string) for date_tag in calender_div.find_all('div', 'day')]
 
-		for date, day_div in zip(dates, self.soup.find_all('div', 'row', 'list-dish')):
+		for date, day_div in zip(dates, self.soup.find_all('div', class_='list-dish')):
 			yield from self.parse_day(date, day_div)
