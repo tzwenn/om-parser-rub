@@ -42,7 +42,7 @@ class RubParser(ABC):
 	def parse_notes_block(self, notes_block_div):
 		if not notes_block_div:
 			return {}
-		text = re.sub('\s+' ,' ' , ''.join(notes_block_div.stripped_strings))
+		text = re.sub(r'\s+' ,' ' , ''.join(notes_block_div.stripped_strings))
 		notes_list = [
 			e.strip() for e in 
 			text.partition(': ')[2].split(',')
@@ -93,6 +93,10 @@ class RubQWestParser(RubParser):
 		notes = self.translate_notes(notes_s.split(','))
 		price_div = meal_div.find('span', 'live_speiseplan_item_price')
 		prices = dict(zip(PRICE_ROLES, map(str.strip, price_div.string.split(self.PRICE_SEP))))
+		items = list(prices.items())
+		for key, value in items:
+			if not any(c in string.digits for c in value):
+				prices.pop(key)
 		return title, notes, prices
 
 
