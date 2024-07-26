@@ -161,7 +161,10 @@ class RubAkafoeParser(RubParser):
 			l = list(item_tag.find('h4').stripped_strings)
 			title = (l or [''])[0]
 
-			notes_s = item_tag.find('small').text.lstrip('(').rstrip(')')
+			small_tag = item_tag.find('small')
+			if small_tag is None:
+				continue
+			notes_s = small_tag.text.lstrip('(').rstrip(')')
 			notes = self.translate_notes(notes_s.split(','))
 
 			price_div = item_tag.find('div', 'price')
