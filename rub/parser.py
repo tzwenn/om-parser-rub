@@ -139,7 +139,7 @@ class RubAkafoeParser(RubParser):
 
 
 	def find_notes(self):
-		header = self.soup.find('h4', string=self.NOTES_HEADING)
+		header = self.soup.find(['h3', 'h4'], string=self.NOTES_HEADING)
 		return header.find_next('div', 'row')
 
 
